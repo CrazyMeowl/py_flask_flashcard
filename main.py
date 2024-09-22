@@ -5,7 +5,7 @@ import webbrowser
 app = Flask(__name__)
 
 def load_config():
-	with open("config.json") as f:
+	with open("config.json",'r',encoding='utf-8') as f:
 		config = json.load(f)
 		return config
 
