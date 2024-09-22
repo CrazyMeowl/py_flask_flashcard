@@ -1,0 +1,34 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Flash Card của {{writer}}</title>
+	</head>
+
+	<body>
+		<h1 class="title">{{name}}</h1>
+		<h2 class="writer">{{writer}}</h1>
+		<br>
+		<h3>{{ word }}</h3>
+		<div id="translation" style="display: none;">
+			Translation: {{ translation }}
+		</div>
+
+		<button onclick="location.href='/';">Quay về trang chủ</button>
+		<button onclick="location.href='/study?word_type={{word_type}}&reverse={{reverse}}';">Đảo</button>
+		<button onclick="window.location.reload();">Tiếp Tục</button>
+		<button onclick="trigger_answer()">Show nghĩa</button>
+
+		<script>
+			function trigger_answer() {
+				var x = document.getElementById("translation");
+				if (x.style.display === "none") {
+					x.style.display = "block";
+				} else {
+					x.style.display = "none";
+				}
+			}
+		</script>
+	</body>
+</html>

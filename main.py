@@ -1,26 +1,18 @@
-from flask import Flask, request, jsonify, render_template_string
+from flask import Flask, request, jsonify, render_template_string, render_template
 import json
 import random
+import webbrowser
 app = Flask(__name__)
 
+def load_config():
+	with open("config.json") as f:
+		config = json.load(f)
+		return config
 
+app_config = load_config()
 @app.route('/', methods=['GET'])
 def main():
-	return render_template_string("""
-		<!DOCTYPE html>
-		<html>
-		  <body>
-			<h1>Flask Dictionary</h1>
-			<p><a href="/add-word/vocab">Add vocabulary</a></p>
-			<p><a href="/add-word/phrasal">Add phrasal verbs </a></p>
-			<p><a href="/add-word/patterns">Add word patterns</a></p>
-			<p><a href="/study/vocab">Study vocabulary</a></p>
-			<p><a href="/study/phrasal">Study phrasal verbs</a></p>
-			<p><a href="/study/patterns">Study word patterns</a></p>
-
-		  </body>
-		</html>
-	""")
+	return render_template('index.html',name = app_config['name'],writer = app_config['writer'])
 
 @app.route('/add-word/<type>', methods=['GET', 'POST'])
 def add_word(type):
@@ -40,24 +32,12 @@ def add_word(type):
 
 		# return jsonify({'message': 'Word added successfully'})
 
-	return render_template_string("""
-		<!DOCTYPE html>
-		<html>
-		  <body>
-			<h1 class="title">Flask Dictionary</h1 />
-			<form method="post" action="/add-word/{{ type }}">
-			  Word: <input type="text" name="word"><br />
-			  Translation: <input type="text" name="translation"><br />
-			  <input type="submit" value="Submit">
-			  <p><a href="/">Quay về trang chủ</a></p>
-			</form />
-		  </body>
-		</html>
-	""", type=type)
+	return render_template('add.html',name = app_config['name'],writer = app_config['writer'], type=type)
 
-@app.route('/study/<word_type>', methods=['GET'])
-def study(word_type):
-	
+@app.route('/study', methods=['GET'])
+def study():
+	word_type = request.args.get('word_type')
+	reverse = request.args.get('reverse')
 	types = ['vocabulary', 'phrasal verbs', 'word patterns']
 
 	def get_random_word(word_type):
@@ -75,37 +55,15 @@ def study(word_type):
 		return word
 
 	word = get_random_word(word_type)
+	if word == None:
+		return render_template("study.html",name = app_config['name'],writer = app_config['writer'], types=types,word="Từ Điển của loại từ này hiện đang trống về trang chủ để thêm từ", translation = "The dictionary for this word type is empty go back to the main page to add more word", word_type=word_type, reverse = '1')
 	# return jsonify({'message': word})
-	return render_template_string("""
-		<!DOCTYPE html>
-		<html>
-		  <body>
-			<h1 style="display: none;">Flask Dictionary</h1>
-			<h3 style="display: none;">Study</h3>
-				<h4>{{ word["word"] }}</h4>
-				<div id="translation" style="display: none;">
-					Translation: {{ word["translation"] }}
-				</div>
-
-			<button onclick="location.href='/';">Quay về trang chủ</button>
-			<button onclick="window.location.reload();">Tiếp Tục</button>
-			<button onclick="trigger_answer()">Show nghĩa</button>
-<script>
-function trigger_answer() {
-  var x = document.getElementById("translation");
-  if (x.style.display === "none") {
-	x.style.display = "block";
-  } else {
-	x.style.display = "none";
-  }
-}
-</script>
-		  </body>
-		</html>
-	""", types=types,word=word,word_type=word_type)
-
-
+	if reverse == '0':
+		return render_template("study.html",name = app_config['name'],writer = app_config['writer'], types=types, word=word["word"], translation = word["translation"], word_type=word_type, reverse = '1')
+	else:
+		return render_template("study.html",name = app_config['name'],writer = app_config['writer'], types=types, word=word["translation"], translation = word["word"], word_type=word_type, reverse = '0')
 
 
 if __name__ == '__main__':
+	webbrowser.open('http://127.0.0.1:5000/', new=2)
 	app.run(debug=True)
