@@ -12,56 +12,97 @@ def load_config():
 app_config = load_config()
 @app.route('/', methods=['GET'])
 def main():
-	return render_template('index.html',name = app_config['name'],writer = app_config['writer'])
+	# Load collections from JSON
+	with open('collections.json','r',encoding='utf-8') as f:
+		collections = json.load(f)
+	return render_template('index.html',name = app_config['name'],writer = app_config['writer'], collections = collections, reverse = '0')
 
-@app.route('/add-word/<type>', methods=['GET', 'POST'])
-def add_word(type):
+@app.route('/add-question/', methods=['GET', 'POST'])
+def add_question():
+	collection = request.args.get('collection')
+	# Load collections from JSON
+	with open('collections.json','r',encoding='utf-8') as f:
+		collections = json.load(f)
+
 	if request.method == 'POST':
-		# Load data from JSON
-		with open('dictionary.json','r',encoding='utf-8') as f:
-			data = json.load(f)
+		
+		question = request.form['question']
+		answer = request.form['answer']
 
-		word = request.form['word']
-		translation = request.form['translation']
+		collections[collection].append({'question': question, 'answer': answer})
 
-		data[type].append({'word': word, 'translation': translation})
+		# Save collections to JSON
+		with open('collections.json', 'w',encoding='utf-8') as f:
+			json.dump(collections, f,ensure_ascii=False,indent=4)
 
-		# Save data to JSON
-		with open('dictionary.json', 'w',encoding='utf-8') as f:
-			json.dump(data, f,ensure_ascii=False,indent=4)
+		# return jsonify({'message': 'question added successfully'})
 
-		# return jsonify({'message': 'Word added successfully'})
+	return render_template('add_question.html',name = app_config['name'],writer = app_config['writer'], collection=collection, collections=collections, reverse = '0')
 
-	return render_template('add.html',name = app_config['name'],writer = app_config['writer'], type=type)
+@app.route('/del-question/', methods=['DELETE'])
+def del_question():
+	collection = request.args.get('collection')
+	question = request.args.get('question')
+	# Load collections from JSON
+	with open('collections.json','r',encoding='utf-8') as f:
+		collections = json.load(f)
+		collections[collection].pop(question)
+		# Save collections to JSON
+		with open('collections.json', 'w',encoding='utf-8') as f:
+			json.dump(collections, f,ensure_ascii=False,indent=4)
+	return "Success", 200
+@app.route('/add-collection/', methods=['GET', 'POST'])
+def add_collection():
+	collection = request.args.get('collection')
+	# Load collections from JSON
+	with open('collections.json','r',encoding='utf-8') as f:
+		collections = json.load(f)
+
+	if request.method == 'POST':
+
+		collection = request.form['collection']
+
+		collections[collection] = []
+
+		# Save collections to JSON
+		with open('collections.json', 'w',encoding='utf-8') as f:
+			json.dump(collections, f,ensure_ascii=False,indent=4)
+
+		# return jsonify({'message': 'question added successfully'})
+
+	return render_template('add_collection.html',name = app_config['name'],writer = app_config['writer'], collections=collections, reverse = '0')
+
 
 @app.route('/study', methods=['GET'])
 def study():
-	word_type = request.args.get('word_type')
+	collection = request.args.get('collection')
 	reverse = request.args.get('reverse')
-	types = ['vocabulary', 'phrasal verbs', 'word patterns']
 
-	def get_random_word(word_type):
-		with open('dictionary.json','r',encoding='utf-8') as f:
-			data = json.load(f)
+	# Load collections from JSON
+	with open('collections.json','r',encoding='utf-8') as f:
+		collections = json.load(f)
+	def get_random_question(collection):
+		with open('collections.json','r',encoding='utf-8') as f:
+			collections = json.load(f)
 
-		if word_type not in data:
+		if collection not in collections:
 			return None
 
-		words = data[word_type]
-		if not words:
+		questions = collections[collection]
+		if not questions:
 			return None
 
-		word = random.choice(words)
-		return word
+		question = random.choice(questions)
+		return question
 
-	word = get_random_word(word_type)
-	if word == None:
-		return render_template("study.html",name = app_config['name'],writer = app_config['writer'], types=types,word="Từ Điển của loại từ này hiện đang trống về trang chủ để thêm từ", translation = "The dictionary for this word type is empty go back to the main page to add more word", word_type=word_type, reverse = '1')
-	# return jsonify({'message': word})
+	question = get_random_question(collection)
+	if question == None:
+		return render_template("study.html",name = app_config['name'],writer = app_config['writer'], collections = collections,question="Bộ Sưu Tập này Đang Trống, vui lòng quay lại trang trủ để thêm câu hỏi.", answer = "This collection is empty. You need to back to main page to add questions", collection=collection, reverse = '1')
+	# return jsonify({'message': question})
 	if reverse == '0':
-		return render_template("study.html",name = app_config['name'],writer = app_config['writer'], types=types, word=word["word"], translation = word["translation"], word_type=word_type, reverse = '1')
+		return render_template("study.html",name = app_config['name'],writer = app_config['writer'], collections = collections, question=question["question"], answer = question["answer"], collection=collection, reverse = '1')
 	else:
-		return render_template("study.html",name = app_config['name'],writer = app_config['writer'], types=types, word=word["translation"], translation = word["word"], word_type=word_type, reverse = '0')
+		return render_template("study.html",name = app_config['name'],writer = app_config['writer'], collections = collections, question=question["answer"], answer = question["question"], collection=collection, reverse = '0')
 
 
 if __name__ == '__main__':

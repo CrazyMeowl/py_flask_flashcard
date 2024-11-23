@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block title %}Index{% endblock %}
+{% block content %}
+<form method="post" action="/add-collection/">
+	<div class="form-group">
+		<label for="le_collection">Name</label>
+		<input type="text"class="form-control" id="le_collection"  name="collection" placeholder="Enter collection's name here!" required>
+	<button type="submit" class="btn btn-primary">Submit</button>
+
+	</div>
+</form>
+{% endblock %}
+
